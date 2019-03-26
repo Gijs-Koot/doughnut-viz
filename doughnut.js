@@ -27,16 +27,14 @@ var randomValues = function(){
     var innerValues = d3.range(5).map(function(n, i){
         return {
             value: Math.random(),
-            label: "label",
-            slug: "inner-" + i
+            label: "label"
         }
     });
 
     var outerValues = d3.range(7).map(function(n, i){
         return {
             value: Math.random(),
-            label: "outerlabel",
-            slug: "outer-" + i
+            label: "outerlabel"
         }
     });
 
@@ -50,12 +48,24 @@ var randomValues = function(){
 
 var refresh = function(data){
 
+    console.log("hi");
+    console.log(data);
+    
     var innerValues = data.innerValues,
         outerValues = data.outerValues;
+
+    innerValues.map(function(v, i){
+        v.slug = v.label + "-" + i;
+    });
+
+    outerValues.map(function(v, i){
+        v.slug = v.label + "-" + i;
+    });
     
     var svg = d3.select("#graph").append("svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .attr("id", "doughnut");
 
     drawInnerCircle(svg);
     drawOuterCircle(svg);
@@ -135,7 +145,7 @@ var refresh = function(data){
         .attr("startOffset","25%")
         .style("text-anchor","middle")
         .attr("xlink:href", function(d){return "#" + d.slug })
-        .text(function(d, i){return i});
+        .text(function(d, i){return d.label});
 
     var outerEnterG = svg.selectAll(".arc-outer")
         .data(outerArcdata)

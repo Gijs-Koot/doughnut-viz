@@ -2,6 +2,10 @@
     padding: 5px;
 }
 
+.input-group {
+    height: 150px;
+}
+
 svg {
     font-family: "Arial Black", Gadget, sans-serif;
 }
