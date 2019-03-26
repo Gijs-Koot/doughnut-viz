@@ -1,0 +1,17 @@
+textPath {
+    alignment-baseline: middle;
+    fill: black,
+}
+
+.circle-outer path, .circle-inner path {
+    fill: green;
+    fill-opacity: .8;
+}
+
+band {
+    fill-opacity: .5
+}
+
+svg {
+    background: aliceblue;
+}

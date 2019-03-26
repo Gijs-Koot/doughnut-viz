@@ -20,11 +20,33 @@ var innerValues = d3.range(5).map(function(n, i){
     }
 });
 
-var innerOuterRadius = 130,
+var centerTransform = "translate(" + width / 2 + "," + height / 2 + ")"
+
+var innerOuterRadius = 180,
     radiusPadding = .1,
-    outerOuterRadius = 200,
+    outerOuterRadius = 230,
     innerInnerRadius = 25,
     outerInnerRadius = 80;
+
+var circlePadding = 10,
+    circleRatio = 2;
+
+var circleRadius = (innerOuterRadius - outerInnerRadius - 2 * circlePadding) / (2 + circleRatio),
+    bandRadius = 2 * circleRadius;
+
+svg.selectAll(".band")
+    .data([{
+        outerRadius: innerOuterRadius - circlePadding - circleRadius,
+        innerRadius: outerInnerRadius + circlePadding + circleRadius,
+        startAngle: 0,
+        endAngle: 2 * Math.PI
+    }]).enter()
+    .append("g")
+    .attr("class", "band")
+    .attr("transform", centerTransform)
+    .append("path")
+    .attr("fill", "lightgreen")
+        .attr("d", arc)
 
 var nin = innerValues.length;
 var innerArclength = (Math.PI * 2 - nin * radiusPadding) / nin;
@@ -43,6 +65,8 @@ var innerArcdata = innerValues.map(function(v, i){
 
     return r
 });
+
+console.log(innerArcdata);
 
 // calculation of outer arcs
 
@@ -72,17 +96,38 @@ var outerArcdata = outerValues.map(function(v, i){
     return r
 });
 
-var centerTransform = "translate(" + width / 2 + "," + height / 2 + ")"
-
-svg.selectAll(".arc-inner")
+var innerEnterG = svg.selectAll(".arc-inner")
     .data(innerArcdata)
     .enter().append("g")
     .attr("class", "arc-inner")
-    .attr("transform", centerTransform)
-    .append("path")
+    .attr("transform", centerTransform);
+
+// fill
+innerEnterG.append("path")
+    .attr("fill", function(d, i) {return color(i);})
+    .attr("d", arc)
+
+// text path
+innerEnterG.append("path")
     .attr("fill", function(d, i) {return color(i);})
     .attr("id", function(d){return d.slug})
-    .attr("d", arc)
+    .attr("d", function(d){
+        var r = (innerOuterRadius + outerInnerRadius) / 2
+        return arc({
+            innerRadius: r,
+            outerRadius: r,
+            startAngle: d.startAngle,
+            endAngle: d.endAngle
+        })
+    });
+
+innerEnterG.append("text")
+    .append("textPath")
+    .attr("startOffset","25%")
+    .style("text-anchor","middle")
+    .attr("xlink:href", function(d){return "#" + d.slug })
+    .text(function(d, i){return i});
+
 
 var outerEnterG = svg.selectAll(".arc-outer")
     .data(outerArcdata)
@@ -92,65 +137,108 @@ outerEnterG.attr("class", "arc-outer")
     .attr("transform", centerTransform)
     .append("path")
     .attr("fill", function(d, i) { return color(i); })
-    .attr("id", function(d){return d.slug})
     .attr("d", arc)
+
+var textPadding = 10;
+
+outerEnterG.attr("class", "arc-outer")
+    .attr("transform", centerTransform)
+    .append("path")
+    .attr("id", function(d){return d.slug})
+    .attr("d", function(d){
+        var r = d.outerRadius + textPadding;
+
+        return arc({
+            innerRadius: r,
+            outerRadius: r,
+            startAngle: d.startAngle,
+            endAngle: d.endAngle
+        })
+    })
 
 outerEnterG.append("text")
     .append("textPath")
     .text(function(d){return d.label})
-    .attr("startOffset","20%")
+    .attr("startOffset","25%")
     .style("text-anchor","middle")
     .attr("xlink:href", function(d){return "#" + d.slug})
     .attr("fill", "black");
 
 // draw omgevingsplafond
 
-var circlePadding = 10,
-    circleRatio = 2;
-
-var circleRadius = (outerInnerRadius - innerOuterRadius - 2 * circlePadding) / (2 + circleRatio),
-    bandRadius = 2 * circleRatio;
-
-console.log(circleRadius, bandRadius)
-
-svg.selectAll(".circle-outer")
+var circleOuterG = svg.selectAll(".circle-outer")
     .data([{
         outerRadius: innerOuterRadius - circlePadding,
-        innerRadius: innerOuterRadius - circlePadding - bandRadius,
+        innerRadius: innerOuterRadius - circlePadding - circleRadius,
         startAngle: 0,
         endAngle: 2 * Math.PI
     }]).enter()
     .append("g")
     .attr("class", "circle-outer")
-    .attr("transform", centerTransform)
-    .append("path")
+    .attr("transform", centerTransform);
+
+// outline
+
+circleOuterG.append("path")
     .attr("fill", "green")
     .attr("d", arc)
 
-svg.selectAll(".circle-inner")
+// textgroup
+
+circleOuterG.append("path")
+    .attr("d", function(d){
+        var r = (d.innerRadius + d.outerRadius) / 2
+        return arc({
+            innerRadius: r,
+            outerRadius: r,
+            startAngle: 0,
+            endAngle: Math.PI * 2
+        })
+    })
+    .attr("id", "circle-outer")
+
+
+circleOuterG.append("text")
+    .append("textPath")
+    .attr("xlink:href", "#circle-outer")
+    .text("Omgevingsplafond")
+
+var circleInnerG = svg.selectAll(".circle-inner")
     .data([{
         outerRadius: outerInnerRadius + circlePadding,
-        innerRadius: outerInnerRadius + circlePadding + bandRadius,
+        innerRadius: outerInnerRadius + circlePadding + circleRadius,
         startAngle: 0,
         endAngle: 2 * Math.PI
     }]).enter()
     .append("g")
     .attr("class", "circle-inner")
-    .attr("transform", centerTransform)
-    .append("path")
-    .attr("fill", "green")
-    .attr("d", arc)
+    .attr("transform", centerTransform);
 
-svg.selectAll(".band")
-    .data([{
-        outerRadius: innerOuterRadius - circlePadding - bandRadius,
-        innerRadius: outerInnerRadius + circlePadding + bandRadius,
-        startAngle: 0,
-        endAngle: 2 * Math.PI
-    }]).enter()
-    .append("g")
-    .attr("class", "band")
-    .attr("transform", centerTransform)
-    .append("path")
-    .attr("fill", "lightgreen")
-    .attr("d", arc)
+// fill
+
+circleInnerG.append("path")
+    .attr("d", arc);
+
+// textpath
+
+circleInnerG.append("path")
+    .attr("d", function(d){
+        var r = (d.innerRadius + d.outerRadius) / 2
+        return arc({
+            innerRadius: r,
+            outerRadius: r,
+            startAngle: 0,
+            endAngle: Math.PI * 2
+        })
+    })
+    .attr("id", "circle-inner");
+
+circleInnerG.append("text")
+    .append("textPath")
+    .attr("xlink:href", "#circle-inner")
+    .text("Bedrijvigheidsbasis")
+
+console.log("hidasf")
+
+
+
