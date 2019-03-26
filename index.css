@@ -1,3 +1,23 @@
+.col-sm {
+    padding: 5px;
+}
+
+svg {
+    font-family: "Arial Black", Gadget, sans-serif;
+}
+
+.arc-inner path {
+    fill: red;
+}
+
+.arc-outer path {
+    fill: red;
+}
+
+.band {
+    fill: lightgreen;
+}
+
 textPath {
     alignment-baseline: middle;
     fill: black,
