@@ -1,17 +1,8 @@
 var width = 960,
-    height = 500,
-    outerRadius = Math.min(width, height) * .5 - 10,
-    innerRadius = outerRadius * .6;
-
-var n = 10,
-    data0 = d3.range(n).map(Math.random),
-    data1 = d3.range(15).map(Math.random),
-    data;
+    height = 500;
 
 var color = d3.scale.category20();
-
 var arc = d3.svg.arc();
-
 var pie = d3.layout.pie()
     .sort(null);
 
@@ -19,13 +10,15 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-var arcdata = arcs(data0, data1);
-
-console.log(arcdata);
-
 // calculating inner arcs
 
-var innerValues = d3.range(5).map(Math.random);
+var innerValues = d3.range(5).map(function(n, i){
+    return {
+        value: Math.random(),
+        label: "label",
+        slug: "inner-" + i
+    }
+});
 
 var innerOuterRadius = 130,
     radiusPadding = .1,
@@ -37,117 +30,127 @@ var nin = innerValues.length;
 var innerArclength = (Math.PI * 2 - nin * radiusPadding) / nin;
 
 var innerArcdata = innerValues.map(function(v, i){
-    return {
+    r = {
         startAngle: i * (innerArclength + radiusPadding),
         endAngle: (i + 1) * innerArclength + i * radiusPadding,
-        innerRadius: innerInnerRadius + v * (outerInnerRadius - innerInnerRadius),
+        innerRadius: innerInnerRadius + v.value * (outerInnerRadius - innerInnerRadius),
         outerRadius: outerInnerRadius
     }
-})
+
+    for (key in v){
+        r[key] = v[key]
+    }
+
+    return r
+});
 
 // calculation of outer arcs
 
-var outerValues = d3.range(7).map(Math.random);
+var outerValues = d3.range(7).map(function(n, i){
+    return {
+        value: Math.random(),
+        label: "outerlabel",
+        slug: "outer-" + i
+    }
+});
 
 var nout = outerValues.length;
 var outerArclength = (Math.PI * 2 - nout * radiusPadding) / nout;
 
 var outerArcdata = outerValues.map(function(v, i){
-    return {
+    r = {
         startAngle: i * (outerArclength + radiusPadding),
         endAngle: (i + 1) * outerArclength + i * radiusPadding,
         innerRadius: innerOuterRadius,
-        outerRadius: innerOuterRadius + v * (outerOuterRadius - innerOuterRadius)
+        outerRadius: innerOuterRadius + v.value * (outerOuterRadius - innerOuterRadius)
     }
+
+    for (key in v){
+        r[key] = v[key]
+    }
+
+    return r
 });
+
+var centerTransform = "translate(" + width / 2 + "," + height / 2 + ")"
 
 svg.selectAll(".arc-inner")
     .data(innerArcdata)
     .enter().append("g")
     .attr("class", "arc-inner")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .attr("transform", centerTransform)
     .append("path")
-    .attr("fill", function(d, i) { return color(i); })
-    .attr("d", arc);
+    .attr("fill", function(d, i) {return color(i);})
+    .attr("id", function(d){return d.slug})
+    .attr("d", arc)
 
-svg.selectAll(".arc-outer")
+var outerEnterG = svg.selectAll(".arc-outer")
     .data(outerArcdata)
-    .enter().append("g")
-    .attr("class", "arc-inner")
-    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+    .enter().append("g");
+
+outerEnterG.attr("class", "arc-outer")
+    .attr("transform", centerTransform)
     .append("path")
     .attr("fill", function(d, i) { return color(i); })
-    .attr("d", arc);
+    .attr("id", function(d){return d.slug})
+    .attr("d", arc)
 
-// transition(1);
+outerEnterG.append("text")
+    .append("textPath")
+    .text(function(d){return d.label})
+    .attr("startOffset","20%")
+    .style("text-anchor","middle")
+    .attr("xlink:href", function(d){return "#" + d.slug})
+    .attr("fill", "black");
 
-function arcs(data0, data1) {
-  var arcs0 = pie(data0),
-      arcs1 = pie(data1),
-      i = -1,
-      arc;
+// draw omgevingsplafond
 
-  console.log(arcs0)
-   
-  while (++i < n) {
-    arc = arcs0[i];
-    arc.innerRadius = innerRadius;
-    arc.outerRadius = outerRadius;
-    // arc.next = arcs1[i];
-  }
-  return arcs0;
-}
+var circlePadding = 10,
+    circleRatio = 2;
 
-function transition(state) {
-  var path = d3.selectAll(".arc > path")
-      .data(state ? arcs(data0, data1) : arcs(data1, data0));
+var circleRadius = (outerInnerRadius - innerOuterRadius - 2 * circlePadding) / (2 + circleRatio),
+    bandRadius = 2 * circleRatio;
 
-  // Wedges split into two rings.
-  var t0 = path.transition()
-      .duration(1000)
-      .attrTween("d", tweenArc(function(d, i) {
-        return {
-          innerRadius: i & 1 ? innerRadius : (innerRadius + outerRadius) / 2,
-          outerRadius: i & 1 ? (innerRadius + outerRadius) / 2 : outerRadius
-        };
-      }));
+console.log(circleRadius, bandRadius)
 
-  // Wedges translate to be centered on their final position.
-  var t1 = t0.transition()
-      .attrTween("d", tweenArc(function(d, i) {
-        var a0 = d.next.startAngle + d.next.endAngle,
-            a1 = d.startAngle - d.endAngle;
-        return {
-          startAngle: (a0 + a1) / 2,
-          endAngle: (a0 - a1) / 2
-        };
-      }));
+svg.selectAll(".circle-outer")
+    .data([{
+        outerRadius: innerOuterRadius - circlePadding,
+        innerRadius: innerOuterRadius - circlePadding - bandRadius,
+        startAngle: 0,
+        endAngle: 2 * Math.PI
+    }]).enter()
+    .append("g")
+    .attr("class", "circle-outer")
+    .attr("transform", centerTransform)
+    .append("path")
+    .attr("fill", "green")
+    .attr("d", arc)
 
-  // Wedges then update their values, changing size.
-  var t2 = t1.transition()
-        .attrTween("d", tweenArc(function(d, i) {
-          return {
-            startAngle: d.next.startAngle,
-            endAngle: d.next.endAngle
-          };
-        }));
+svg.selectAll(".circle-inner")
+    .data([{
+        outerRadius: outerInnerRadius + circlePadding,
+        innerRadius: outerInnerRadius + circlePadding + bandRadius,
+        startAngle: 0,
+        endAngle: 2 * Math.PI
+    }]).enter()
+    .append("g")
+    .attr("class", "circle-inner")
+    .attr("transform", centerTransform)
+    .append("path")
+    .attr("fill", "green")
+    .attr("d", arc)
 
-  // Wedges reunite into a single ring.
-  var t3 = t2.transition()
-      .attrTween("d", tweenArc(function(d, i) {
-        return {
-          innerRadius: innerRadius,
-          outerRadius: outerRadius
-        };
-      }));
-
-  setTimeout(function() { transition(!state); }, 5000);
-}
-
-function tweenArc(b) {
-  return function(a, i) {
-    var d = b.call(this, a, i), i = d3.interpolate(a, d);
-    for (var k in d) a[k] = d[k]; // update data
-    return function(t) { return arc(i(t)); };
-  };
-}
+svg.selectAll(".band")
+    .data([{
+        outerRadius: innerOuterRadius - circlePadding - bandRadius,
+        innerRadius: outerInnerRadius + circlePadding + bandRadius,
+        startAngle: 0,
+        endAngle: 2 * Math.PI
+    }]).enter()
+    .append("g")
+    .attr("class", "band")
+    .attr("transform", centerTransform)
+    .append("path")
+    .attr("fill", "lightgreen")
+    .attr("d", arc)
