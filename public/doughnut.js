@@ -16,7 +16,7 @@ var innerOuterRadius = 200,
 
 var textPadding = 10;
 
-var circlePadding = 10,
+var circlePadding = 0,
     circleRatio = 2;
 
 var circleRadius = (innerOuterRadius - outerInnerRadius - 2 * circlePadding) / (2 + circleRatio),
@@ -34,7 +34,7 @@ var randomValues = function(){
     var outerValues = d3.range(7).map(function(n, i){
         return {
             value: Math.random(),
-            label: "outerlabel"
+            label: "outer label"
         }
     });
 
@@ -90,7 +90,7 @@ var refresh = function(data){
         r = {
             startAngle: i * (innerArclength + radiusPadding),
             endAngle: (i + 1) * innerArclength + i * radiusPadding,
-            innerRadius: innerInnerRadius + v.value * (outerInnerRadius - innerInnerRadius),
+            innerRadius: outerInnerRadius - v.value * (outerInnerRadius - innerInnerRadius),
             outerRadius: outerInnerRadius
         }
         for (key in v){
@@ -173,12 +173,12 @@ var refresh = function(data){
             })
         })
 
-    outerEnterG.append("text")
+    tPath = outerEnterG.append("text")
         .append("textPath")
-        .text(function(d){return d.label})
         .attr("startOffset","25%")
         .style("text-anchor","middle")
-        .attr("xlink:href", function(d){return "#" + d.slug})
+        .attr("href", function(d){return "#" + d.slug})
+        .text(function(d){return d.label})
 
 }
 
